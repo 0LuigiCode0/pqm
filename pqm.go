@@ -106,92 +106,104 @@ func InitTable(tx *sql.Tx, table *Table) error {
 	return nil
 }
 
-func Integer(def int32, isNotNull bool) *Column {
+func Integer(title string, def int32, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "integer",
 		Default:   def,
 		IsNotNull: isNotNull,
 		Length:    0,
 	}
 }
-func Bigint(def int64, isNotNull bool) *Column {
+func Bigint(title string, def int64, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "bigint",
 		Default:   def,
 		IsNotNull: isNotNull,
 		Length:    0,
 	}
 }
-func DPrecision(def float64, isNotNull bool) *Column {
+func DPrecision(title string, def float64, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "double precision",
 		Default:   def,
 		IsNotNull: isNotNull,
 		Length:    0,
 	}
 }
-func VarChar(def string, length int64, isNotNull bool) *Column {
+func VarChar(title, def string, length int64, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "character varying",
 		Default:   def,
 		IsNotNull: isNotNull,
 		Length:    length,
 	}
 }
-func Text(def string, isNotNull bool) *Column {
+func Text(title, def string, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "text",
 		Default:   def,
 		IsNotNull: isNotNull,
 		Length:    0,
 	}
 }
-func Boolean(def bool) *Column {
+func Boolean(title string, def bool) *Column {
 	return &Column{
+		Title:   title,
 		Type:    "boolean",
 		Default: def,
 	}
 }
-func Bytea(def []byte, isNotNull bool) *Column {
+func Bytea(title string, def []byte, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "bytea",
 		Default:   def,
 		IsNotNull: isNotNull,
 		Length:    0,
 	}
 }
-func Array(def []interface{}, isNotNull bool) *Column {
+func Array(title string, def []interface{}, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "array",
 		Default:   def,
 		IsNotNull: isNotNull,
 		Length:    0,
 	}
 }
-func JsonB(def json.RawMessage, isNotNull bool) *Column {
+func JsonB(title string, def json.RawMessage, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "jsonb",
 		Default:   def,
 		IsNotNull: isNotNull,
 		Length:    0,
 	}
 }
-func Timestamp(def time.Time, isNotNull bool) *Column {
+func Timestamp(title string, def time.Time, isNotNull bool) *Column {
 	return &Column{
+		Title:     title,
 		Type:      "timestamp",
 		Default:   def,
 		IsNotNull: isNotNull,
 	}
 }
 
-func Unique(fromColumn []string) *Key {
+func Unique(title string, fromColumn []string) *Key {
 	return &Key{
+		Title:       title,
 		FromColumns: fromColumn,
 		IsUnicue:    true,
 	}
 }
-func Reference(fromColumn, toTable, toColumn string) *Key {
+func Reference(title string, fromColumn, toTable, toColumn string) *Key {
 	return &Key{
+		Title:        title,
 		FromColumns:  []string{fromColumn},
 		ToColumns:    []string{toColumn},
 		ToTableTitle: toTable,
