@@ -12,22 +12,30 @@ import (
 
 type Table struct {
 	Title  string
-	Column map[string]*Column
-	Keys   map[string]*Key
+	Column []*Column
+	Keys   []*Key
 }
 type Column struct {
+	Title     string
 	Type      string
 	IsNotNull bool
 	Default   interface{}
 	Length    int64
 }
 type Key struct {
+	Title           string
 	FromColumns     []string
 	ToColumns       []string
 	ToTableTitle    string
 	IsUnicue        bool
 	IsReferences    bool
 	IsUpdateCascade bool
+}
+
+type table struct {
+	Title  string
+	Column map[string]*Column
+	Keys   map[string]*Key
 }
 type tableInfo struct {
 	Column     string
@@ -48,41 +56,41 @@ func InitTable(tx *sql.Tx, table *Table) error {
 	}
 	qry := `create table if not exists ` + table.Title + ` (id bigserial primary Key);`
 
-	for k, v := range table.Column {
-		if tt, ok := t.Column[k]; ok {
+	for _, v := range table.Column {
+		if tt, ok := t.Column[v.Title]; ok {
 			if tt.Type != v.Type {
-				deleteColumn(&qry, table.Title, k)
-				addColumn(&qry, table.Title, k, v)
+				deleteColumn(&qry, table.Title, v.Title)
+				addColumn(&qry, table.Title, v)
 				continue
 			}
 			if tt.Type == "character varying" && tt.Length != v.Length {
-				setLengthColumn(&qry, table.Title, k, v.Type, v.Length)
+				setLengthColumn(&qry, table.Title, v.Title, v.Type, v.Length)
 			}
 			if tt.IsNotNull != v.IsNotNull {
-				setNullColumn(&qry, table.Title, k, v.IsNotNull)
+				setNullColumn(&qry, table.Title, v.Title, v.IsNotNull)
 			}
 			if tt.Default != buildDef(v.Default, v.Type) {
-				setDefaultColumn(&qry, table.Title, k, v.Type, v.Default)
+				setDefaultColumn(&qry, table.Title, v.Title, v.Type, v.Default)
 			}
 		} else {
-			addColumn(&qry, table.Title, k, v)
+			addColumn(&qry, table.Title, v)
 		}
 	}
 
 	keys := ""
-	for k, v := range table.Keys {
-		if kk, ok := t.Keys[k]; ok {
+	for _, v := range table.Keys {
+		if kk, ok := t.Keys[v.Title]; ok {
 			if kk.IsReferences != v.IsReferences ||
 				kk.IsUnicue != v.IsUnicue ||
 				(v.ToTableTitle != "" && kk.ToTableTitle != v.ToTableTitle) ||
 				!equalsArray(v.FromColumns, kk.FromColumns) ||
 				!equalsArray(v.ToColumns, kk.ToColumns) {
-				deleteKey(&keys, table.Title, k)
-				addKey(&keys, table.Title, k, v)
+				deleteKey(&keys, table.Title, v.Title)
+				addKey(&keys, table.Title, v)
 			}
-			delete(t.Keys, k)
+			delete(t.Keys, v.Title)
 		} else {
-			addKey(&keys, table.Title, k, v)
+			addKey(&keys, table.Title, v)
 		}
 	}
 	for k := range t.Keys {
@@ -191,8 +199,8 @@ func Reference(fromColumn, toTable, toColumn string) *Key {
 	}
 }
 
-func scanInfo(title string, tx *sql.Tx) (*Table, error) {
-	t := &Table{
+func scanInfo(title string, tx *sql.Tx) (*table, error) {
+	t := &table{
 		Title:  title,
 		Column: map[string]*Column{},
 		Keys:   map[string]*Key{},
@@ -289,8 +297,8 @@ func scanInfo(title string, tx *sql.Tx) (*Table, error) {
 	return t, nil
 }
 
-func addColumn(qry *string, title, Key string, c *Column) {
-	*qry += fmt.Sprintf("\nalter table %v add %v %v", title, Key, c.Type)
+func addColumn(qry *string, title string, c *Column) {
+	*qry += fmt.Sprintf("\nalter table %v add %v %v", title, c.Title, c.Type)
 	if c.Type == "character varying" && c.Length > 0 {
 		*qry += fmt.Sprintf("(%v)", c.Length)
 	}
@@ -329,16 +337,16 @@ func deleteColumn(qry *string, title, Key string) {
 	*qry += fmt.Sprintf("\nalter table %v drop Column %v;", title, Key)
 }
 
-func addKey(qry *string, title, Key string, k *Key) {
+func addKey(qry *string, title string, k *Key) {
 	if k.IsUnicue {
 		if len(k.FromColumns) > 0 {
-			*qry += fmt.Sprintf("\nalter table %v add constraint %v unique(", title, Key)
+			*qry += fmt.Sprintf("\nalter table %v add constraint %v unique(", title, k.Title)
 			*qry += strings.Join(k.FromColumns, ",")
 			*qry += ");"
 		}
 	} else if k.IsReferences {
 		if len(k.FromColumns) == 1 && len(k.ToColumns) == 1 {
-			*qry += fmt.Sprintf("\nalter table %v add constraint %v foreign Key (%v) references %v(%v) on delete cascade;", title, Key, k.FromColumns[0], k.ToTableTitle, k.ToColumns[0])
+			*qry += fmt.Sprintf("\nalter table %v add constraint %v foreign Key (%v) references %v(%v) on delete cascade;", title, k.Title, k.FromColumns[0], k.ToTableTitle, k.ToColumns[0])
 		}
 	}
 }
