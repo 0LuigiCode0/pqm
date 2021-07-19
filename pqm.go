@@ -33,7 +33,6 @@ func InitTable(tx *sql.Tx, table *Table) error {
 				setNullColumn(&qry, table.Title, v.Title, v.IsNotNull)
 			}
 			if tt.Default != buildDef(v.Default, v.Type) {
-				fmt.Println(tt.Default, buildDef(v.Default, v.Type))
 				setDefaultColumn(&qry, table.Title, v.Title, v.Type, v.Default)
 			}
 		} else {
