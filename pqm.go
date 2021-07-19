@@ -33,6 +33,7 @@ func InitTable(tx *sql.Tx, table *Table) error {
 				setNullColumn(&qry, table.Title, v.Title, v.IsNotNull)
 			}
 			if tt.Default != buildDef(v.Default, v.Type) {
+				fmt.Println(tt.Default, buildDef(v.Default, v.Type))
 				setDefaultColumn(&qry, table.Title, v.Title, v.Type, v.Default)
 			}
 		} else {
@@ -153,7 +154,7 @@ func JsonB(title string, def json.RawMessage, isNotNull bool) Column {
 func Timestamp(title string, def time.Time, isNotNull bool) Column {
 	return &column{
 		Title:     title,
-		Type:      "timestamp",
+		Type:      "timestamp without time zone",
 		Default:   def,
 		IsNotNull: isNotNull,
 	}
@@ -339,7 +340,7 @@ func buildDef(def interface{}, typ string) string {
 		} else if v, ok := def.(json.RawMessage); ok {
 			return fmt.Sprintf("'%v'::%v", string(v), typ)
 		} else if v, ok := def.(time.Time); ok {
-			return fmt.Sprintf("'%v'::%v", v.Format(time.RFC3339), typ)
+			return fmt.Sprintf("'%v'::%v", v.Format("2006-01-02 15:04:05"), typ)
 		} else if v, ok := def.([]byte); ok {
 			return fmt.Sprintf("'%v'::%v", string(v), typ)
 		} else {
